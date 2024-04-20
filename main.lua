@@ -1,25 +1,17 @@
 log.info("Successfully loaded ".._ENV["!guid"]..".")
 mods.on_all_mods_loaded(function() for k, v in pairs(mods) do if type(v) == "table" and v.hfuncs then Helper = v end end end)
 
--- gm.pre_script_hook(gm.constants._ui_draw_button, function(self, other, result, args)
-
---     --
---     local osm  = Helper.find_active_instance(gm.constants.oSteamMultiplayer)
---     if osm then 
---         osm.host_opt[2][1] = osm.host_opt[3][1]
---         --osm.host_opt[2][1] = osm.host_opt[3][1]
---         osm.host_opt[2][1] = osm.host_opt[3][3]
---         osm.host_opt[2][1] = osm.host_opt[3][4]
---         osm.host_opt[2][1] = "dont hover me bro"
---         --print(osm.host_opt[2][2])
---     end
--- end)
-
 -- Testing grenades
 
 local grenade_table = {}
 local count = 0
 local client_player = nil
+
+-- Parameters
+
+local damage_coeff = 5
+local throw_gravity = 0.25
+local throw_speed = -5
 
 function create_ball(old, parent)
     -- Grenade is recreated
@@ -31,16 +23,17 @@ function create_ball(old, parent)
         end
         inst.hspeed = -old.hspeed
         inst.parent = parent
-        inst.custom = true
+        inst.is_ball = true
         print(inst)
         return inst
-    else -- Grenade is new
+    else -- Grenade is new and thrown up
         inst = gm.instance_create_depth(parent.x, parent.y, 1, 681)
         inst.parent = parent
-        inst.gravity = 0.25
-        inst.vspeed = -5
+        inst.gravity = throw_gravity
+        inst.vspeed =  throw_speed
         inst.bounces = -100
-        inst.custom = true
+        inst.is_ball = true
+        inst.damage_coeff = damage_coeff
         print(inst.id)
         --inst.team = 1000
         -- update table info 
@@ -52,10 +45,10 @@ function find_closest_ball(parent)
     local balls, balls_exist = Helper.find_active_instance_all(gm.constants.oEngiGrenade)
     if not balls_exist then return nil end
     local closest_ball = nil
-    local distance  = 0
+    local distance  = 0 
     local closest_distance = 10000000000
     for i=1, #balls do
-        if balls[i].custom then
+        if balls[i].is_ball then
             distance = (balls[i].x - parent.x)*(balls[i].x - parent.x) + (balls[i].y - parent.y)*(balls[i].y - parent.y)
             if distance < closest_distance then 
                 closest_distance = distance
@@ -67,7 +60,7 @@ function find_closest_ball(parent)
 end
 
 function hit_ball(ball, parent, distance)
-    if distance > 50 then return end
+    if distance > 30 then return end
     if gm.actor_get_facing_direction(parent) == 180 then -- facing left
         ball.hspeed = -8
     else -- facing right
