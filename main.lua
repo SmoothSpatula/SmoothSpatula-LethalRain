@@ -13,7 +13,7 @@ local speed_up = 1.2
 local damage_coeff = 0.7
 local throw_gravity = 0.25
 local throw_speed = -4.5
-local hit_distance = 35
+local hit_distance = 50
 
 function create_ball(old, parent)
     -- Grenade is recreated
@@ -67,9 +67,9 @@ function hit_ball(ball, parent, distance)
     --local speed = (ball.status == "bunted") and base_speed or ball.hspeed * 2
     if ball.status == "hit" then 
         if gm.actor_get_facing_direction(parent) == 180 then -- facing left
-            ball.hspeed = - ball.old_hspeed * speed_up
+            ball.hspeed = - math.abs(ball.old_hspeed) * speed_up
         else -- facing right
-            ball.hspeed = ball.old_hspeed * speed_up
+            ball.hspeed = math.abs(ball.old_hspeed) * speed_up
         end
         
     else 
