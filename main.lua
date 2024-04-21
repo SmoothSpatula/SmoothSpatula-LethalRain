@@ -10,18 +10,18 @@ local count = 0
 
 local base_speed = 4
 local speed_up = 1.2
-local damage_coeff = 5
+local damage_coeff = 0.7
 local throw_gravity = 0.25
-local throw_speed = -5
-local hit_distance = 100
+local throw_speed = -4.5
+local hit_distance = 35
 
 function create_ball(old, parent)
     -- Grenade is recreated
     if old ~= nil then
         if old.hspeed >0 then
-            ball = gm.instance_create_depth(old.x - old.hspeed*5, old.y, 1, 681)
+            ball = gm.instance_create_depth(old.x - old.hspeed*10, old.y, 1, 681)
         else
-            ball = gm.instance_create_depth(old.x - old.hspeed*5, old.y, 1, 681)
+            ball = gm.instance_create_depth(old.x - old.hspeed*10, old.y, 1, 681)
         end
         ball.hspeed = -old.hspeed
         ball.parent = parent
@@ -35,12 +35,10 @@ function create_ball(old, parent)
         ball.gravity = throw_gravity
         ball.vspeed =  throw_speed
         ball.bounces = -1000
-        ball.is_ball, ball.status = true, "bunted"
+        ball.is_ball, ball.status = true, "bunted_up"
         ball.old_vspeed, ball.old_hspeed = throw_speed, 0.0
         ball.damage_coeff = damage_coeff
         print(ball.id)
-        --ball.team = 1000
-        -- update table info 
         return ball
     end
 end
@@ -64,42 +62,73 @@ function find_closest_ball(parent)
 end
 
 function hit_ball(ball, parent, distance)
+    local speed = base_speed
     if distance > hit_distance then return end
     --local speed = (ball.status == "bunted") and base_speed or ball.hspeed * 2
     if ball.status == "hit" then 
-        ball.hspeed = -ball.hspeed * speed_up
-    else 
         if gm.actor_get_facing_direction(parent) == 180 then -- facing left
-            ball.hspeed = -base_speed
+            ball.hspeed = - ball.old_hspeed * speed_up
         else -- facing right
-            ball.hspeed = base_speed
+            ball.hspeed = ball.old_hspeed * speed_up
+        end
+        
+    else 
+        if ball.status == "bunted_top" then speed = speed * 2 end
+
+        if gm.actor_get_facing_direction(parent) == 180 then -- facing left
+            ball.hspeed = - speed
+        else -- facing right
+            ball.hspeed = speed
         end
     end 
     ball.vspeed = 0
     ball.old_vspeed = 0
     ball.old_hspeed = ball.hspeed
     ball.gravity = 0
+    ball.damage_coeff = damage_coeff * speed
     ball.status = "hit"
 end
 
+
+local old_balls = {}
 function update_balls()
     local balls, balls_exist = Helper.find_active_instance_all(gm.constants.oEngiGrenade)
     if not balls_exist then return nil end
     for i=1, #balls do
-        if balls[i].is_ball and balls[i].status == "hit" then
-            if math.abs(balls[i].hspeed) < 2 then
-                balls[i].x = balls[i].x + 5 * balls[i].hspeed
+        if balls[i].status == "hit" then
+            if math.abs(balls[i].hspeed) < 2 then --
+                balls[i].x = balls[i].x - 2 * balls[i].old_hspeed
                 balls[i].hspeed = - balls[i].old_hspeed
                 balls[i].vspeed = balls[i].old_vspeed 
+                balls[i].damage_coeff = damage_coeff * math.abs(balls[i].hspeed)
             end
-            if math.abs(balls[i].hspeed) < 2 then
-                balls[i].y = balls[i].y + 5 * balls[i].vspeed
-                balls[i].vspeed = - balls[i].old_vspeed
-                balls[i].hspeed = balls[i].old_hspeed 
+        elseif balls[i].status == "bunted_up" then
+            if balls[i].vspeed < 1.0 then
+                balls[i].status = "bunted_top"
             end
-            balls[i].old_hspeed = balls[i].hspeed
+        elseif balls[i].status == "bunted_top" then
+            if balls[i].vspeed > 1.0 then
+                balls[i].status = "bunted_down"
+            end
+        elseif balls[i].status == "bunted_down" then
+            if balls[i].vspeed < 1.0 then
+                balls[i].status = "grounded"
+            end
+        elseif balls[i].status == "grounded" then
+            balls[i].gravity = 0
+            balls[i].hspeed = 0
+            balls[i].vspeed = 0
         end
+        balls[i].old_hspeed = balls[i].hspeed
     end
+    if #old_balls ~= #balls then
+        print("ball destroyed")
+        
+
+
+    end
+    old_balls = balls
+
 end
 
 function check_grenades()
@@ -136,4 +165,4 @@ end)
 
 gm.post_script_hook(gm.constants.__input_system_tick, function() 
     update_balls()
-end)
+end) 
