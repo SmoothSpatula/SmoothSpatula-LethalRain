@@ -5,7 +5,7 @@ mods.on_all_mods_loaded(function() for k, v in pairs(mods) do if type(v) == "tab
 
 local base_speed = 4
 local speed_up = 1.4
-local damage_coeff = 0.5
+local damage_coeff = 0.5 -- Ball damage = damage_coeff * ball speed
 local throw_gravity = 0.25
 local throw_speed = -4.5
 local hit_distance = 40
@@ -22,6 +22,7 @@ local client_player = nil
 
 -- ========== Ball Handling ==========  
 
+-- Like the phoenix, the ball rises from the ashes upon hitting an ennemy
 function recreate_old_ball(old_var)
     ball = gm.instance_create_depth(old_var.x - (old_var.old_hspeed * 5), old_var.y, 1, 681)
     ball.parent = old_var.par
@@ -38,6 +39,8 @@ function recreate_old_ball(old_var)
     return ball
 end
 
+-- The variable[] array in instances which contains all custom vars as well as some others gets deleted upon instance destruction
+-- So we back it up
 function get_ball_vars(ball)
     return {
         par = ball.parent,
@@ -52,7 +55,7 @@ function get_ball_vars(ball)
     }
 end
 
--- use this to hit a single ball
+-- returns the single closest ball
 function find_closest_ball(parent)
     
     if not next(old_balls) then return nil end -- return if balls are empty
@@ -69,13 +72,15 @@ function find_closest_ball(parent)
     return closest_ball, math.sqrt(closest_distance)
 end
 
+-- returns all the balls under a certain distance
 function find_balls_under_distance(parent)
     if not next(old_balls) then return nil end -- return if balls are empty
     local close_balls = {}
+    local max_distance = hit_distance*hit_distance
     local distance = 0 
     for c_id, ball in pairs(old_balls) do
-        distance = (ball.x - parent.x)*(ball.x - parent.x) + (ball.y - parent.y)*(ball.y - parent.y) -- clean this later
-        if distance < hit_distance*hit_distance then 
+        distance = (ball.x - parent.x)*(ball.x - parent.x) + (ball.y - parent.y)*(ball.y - parent.y) -- clean this later (can make it way faster)
+        if distance < max_distance then 
             table.insert(close_balls, #close_balls + 1 ,ball)
         end
     end
@@ -84,6 +89,7 @@ end
 
 -- ========== Skills ==========
 
+-- Throws the  ball up in 'bunted' state 
 function create_new_ball(parent)
     -- Grenade is recreated
     local ball = gm.instance_create_depth(parent.x, parent.y, 1, 681)
@@ -105,6 +111,8 @@ function create_new_ball(parent)
     return ball
 end
 
+-- Hits the ball, giving it some speed and changing it's state to 'hit'
+-- Hitting the ball at it's apex makes it go twice as fast
 function hit_ball(ball, parent, distance)
     local speed = base_speed
     if distance > hit_distance then return end
