@@ -124,11 +124,9 @@ function find_balls_under_distance(parent)
     return close_balls
 end
 
-
 function hit_ball(ball, parent, distance)
     local speed = base_speed
     if distance > hit_distance then return end
-    --local speed = (ball.status == "bunted") and base_speed or ball.hspeed * 2
     if ball.status == "hit" then 
         if gm.actor_get_facing_direction(parent) == 180 then -- facing left
             ball.hspeed = - math.min(max_speed, math.abs(ball.old_hspeed) * speed_up)
