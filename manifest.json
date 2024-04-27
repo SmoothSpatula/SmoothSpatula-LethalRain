@@ -1,0 +1,10 @@
+﻿{
+	"name": "SmoothSpatula-LethalRainWIP",
+	"version_number": "1.0.0",
+	"website_url": "https://github.com/SmoothSpatula/SmoothSpatula-LethalRain",
+	"description": "yes",
+	"dependencies": [
+		"ReturnOfModding-ReturnOfModding-1.0.0",
+		"Klehrik-HelperFunctions-1.0.4"
+	]
+}
