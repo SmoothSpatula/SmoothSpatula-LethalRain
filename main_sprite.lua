@@ -276,10 +276,6 @@ end
 
 local function skill_primary_on_activation(self, actor_skill, skill_index)
     if self.class ~= candyman_id then return end
-    if not self.local_client_is_authority then return end -- don't call if this isn't our player
-
-    -- print(actor_skill.value.name)
-    -- print(skill_index.value.token_name)
 
     gm._mod_actor_setActivity(self, 92, 1, true, nil)
     self.image_speed = 0.2
@@ -291,36 +287,30 @@ local function skill_primary_on_activation(self, actor_skill, skill_index)
         self.pHspeed = 0
         gm._mod_sprite_set_speed(shoot1_sprite, 1)
         gm._mod_instance_set_sprite(self, shoot1_sprite)
-        -- gm._mod_instance_set_sprite(self, gm.constants.sAcridShoot1_1)
     end
 
     local ball, distance = find_closest_ball(self)
     if ball ~= nil then hit_ball(ball, self, distance) end
 
-    print(gm.actor_get_facing_direction(self))
-
-    local target = gm.find_opponent(self.x, self.y, 70, self.team)
-    if target == -4 then return end
-
     local direction = gm.actor_get_facing_direction(self)
 
-    -- self.x+math.cos(direction)*55,
-    --     self.y-30,
-    gm._mod_attack_fire_direct(
+    local orig_x = self.x - 10
+    local orig_y = self.y - 30
+    gm._mod_attack_fire_explosion(
         self,
-        target,
-        target.x,
-        target.y,
-        direction,
+        orig_x,
+        orig_y,
+        95,
+        50,
         self.skills[1].active_skill.damage,
+        0,
         gm.constants.sSparks1,
-        1
+        true
     )
 end
 
 local function skill_secondary_on_activation(self, actor_skill, skill_index)
     if self.class ~= candyman_id then return end
-    if not self.local_client_is_authority then return end -- don't call if this isn't our player
 
     gm._mod_actor_setActivity(self, 92, 1, true, nil)    
     print(self.image_speed)
@@ -337,14 +327,12 @@ end
 
 local function skill_utility_on_activation(self, actor_skill, skill_index)
     if self.class ~= candyman_id then return end
-    if not self.local_client_is_authority then return end -- don't call if this isn't our player
 
     create_ball (nil, self)
 end
 
 local function skill_special_on_activation(self, actor_skill, skill_index)
     if self.class ~= candyman_id then return end
-    if not self.local_client_is_authority then return end -- don't call if this isn't our player
 end
 
 -- Callbacks
