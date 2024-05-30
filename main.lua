@@ -22,6 +22,7 @@ local death_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sC
 local jump_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanjump.png")
 local jumpfall_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanjumpfall.png")
 local hit_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanhit.png")
+local empty_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanEmpty.png")
 
 local palette_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "candyman_PAL.png")
 
@@ -43,6 +44,7 @@ local death_sprite = gm.sprite_add(death_path, 4, false, false, 29, 10)
 local jump_sprite = gm.sprite_add(jump_path, 1, false, false, 29, 45)
 local jumpfall_sprite = gm.sprite_add(jumpfall_path, 1, false, false, 29, 45)
 local hit_sprite = gm.sprite_add(hit_path, 1, false, false, 29, 45)
+local empty_sprite = gm.sprite_add(empty_path, 1, false, false, 0, 0)
 
 local palette_sprite = gm.sprite_add(hit_path, 1, false, false, 0, 0)
 
@@ -368,7 +370,7 @@ local function create_survivor()
 
     skill_secondary.cooldown = 90
     skill_secondary.damage = 0.75
-    skill_secondary.required_stock = 0
+    skill_secondary.required_stock = 1
     skill_secondary.require_key_press = true
     skill_secondary.use_delay = 0
 
@@ -407,8 +409,8 @@ local function create_survivor()
     skill_special.sprite = skills_sprite
     skill_special.subimage = 3
 
-    skill_special.cooldown = 1500
-    skill_special.required_stock = 0
+    skill_special.cooldown = 1800
+    skill_special.required_stock = 1
     skill_special.require_key_press = true
     skill_special.use_delay = 0
 
@@ -468,7 +470,7 @@ local function skill_primary_on_activation(self, actor_skill, skill_index)
         60,
         35,
         self.skills[1].active_skill.damage,
-        0,
+        empty_sprite,
         gm.constants.sSparks1,
         true
     )
