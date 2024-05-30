@@ -224,7 +224,6 @@ end
 
 
 function special_skill(parent)
-    print("SPECIAL")
     if special_timer > 0 then 
         special_timer = special_duration
         return 
