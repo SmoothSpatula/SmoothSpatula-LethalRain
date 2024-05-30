@@ -10,5 +10,10 @@ Throw and hit balls to defeat your ennemies.
 * This mod should work in Singleplayer, it also works in Multiplayer apart from the *Special* which doesn't really work (will fix that soon).
 * If you feel like this mod is missing features (like sounds, different colors, etc...) they might come in the future.
 
+## Special Thanks To
+* Sarn for the his survivor setup code
+* The Return Of Modding team
+* You for playing this mod
+
 ## Contact
 For questions or bug reports, you can find us in the [RoRR Modding Server](https://discord.gg/VjS57cszMq) @Miguelito @Umigatari
