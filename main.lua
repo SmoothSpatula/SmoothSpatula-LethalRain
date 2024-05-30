@@ -8,11 +8,17 @@ local grenade_table = {}
 local count = 0
 local client_player = nil
 
--- Character parameters
+
+-- ========== Sprite ========== 
 
 local portrait_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanPortrait.png")
 local portraitsmall_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanPortraitSmall.png")
 
+-- Using a modified version of https://elthen.itch.io/2d-pixel-art-portal-sprites as a placeholder
+local special_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites","PurplePortalSpriteSheet192x96v2.png")
+local ball_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites","sCandymanBall.png")
+
+local skills_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "skillsicons.png")
 local loadout_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanLoadout.png")
 local idle_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanIdle.png")
 local walk_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanWalk.png")
@@ -24,24 +30,28 @@ local jump_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCa
 local jumpfall_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanjumpfall.png")
 local hit_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanhit.png")
 
+local palette_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "candyman_PAL.png")
+
+
 local portrait_sprite = gm.sprite_add(portrait_path, 1, false, false, 0, 0)
 local portraitsmall_sprite = gm.sprite_add(portraitsmall_path, 1, false, false, 0, 0)
 
-local loadout_sprite = gm.sprite_add(loadout_path, 7, false, false, 100, 5)
-local idle_sprite = gm.sprite_add(idle_path, 3, false, false, 40, 53)
-local walk_sprite = gm.sprite_add(walk_path, 2, false, false, 40, 52)
-local shoot1_sprite = gm.sprite_add(shoot1_path, 7, false, false, 40, 42)
-local shoot1_air_sprite = gm.sprite_add(shoot1_air_path, 7, false, false, 40, 58)
-local shoot2_sprite = gm.sprite_add(shoot2_path, 4, false, false, 40, 50)
-local death_sprite = gm.sprite_add(death_path, 4, false, false, 40, 39)
-local jump_sprite = gm.sprite_add(jump_path, 1, false, false, 10, 54)
-local jumpfall_sprite = gm.sprite_add(jumpfall_path, 1, false, false, 17, 36)
-local hit_sprite = gm.sprite_add(hit_path, 1, false, false, 20, 46)
+local special_sprite = gm.sprite_add(special_path, 8, false, false, 48, 105)
+local ball_sprite = gm.sprite_add(ball_path, 6, false, false, 14, 14)
 
--- if new_sprite == -1 then
---     log.warning("Failed loading sprite", file_name, file_path)
---     return gm.constants.sCommandoWalk
--- end
+local skills_sprite = gm.sprite_add(skills_path, 4, false, false, 0, 0)
+local loadout_sprite = gm.sprite_add(loadout_path, 7, false, false, 100, 5)
+local idle_sprite = gm.sprite_add(idle_path, 3, false, false, 29, 45)
+local walk_sprite = gm.sprite_add(walk_path, 2, false, false, 29, 45)
+local shoot1_sprite = gm.sprite_add(shoot1_path, 7, false, false, 29, 45)
+local shoot1_air_sprite = gm.sprite_add(shoot1_air_path, 7, false, false, 29, 45)
+local shoot2_sprite = gm.sprite_add(shoot2_path, 4, false, false, 29, 45)
+local death_sprite = gm.sprite_add(death_path, 4, false, false, 29, 10)
+local jump_sprite = gm.sprite_add(jump_path, 1, false, false, 29, 45)
+local jumpfall_sprite = gm.sprite_add(jumpfall_path, 1, false, false, 29, 45)
+local hit_sprite = gm.sprite_add(hit_path, 1, false, false, 29, 45)
+
+local palette_sprite = gm.sprite_add(hit_path, 1, false, false, 0, 0)
 
 --[==[ Section Ball Handling ]==]--
 
@@ -75,13 +85,6 @@ local custom_id = 0
 local ingame = false
 local client_player = nil
 
-
--- ========== Sprite ==========  
-
--- Using a modified version of https://elthen.itch.io/2d-pixel-art-portal-sprites as a placeholder
-local sprite_test = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites","PurplePortalSpriteSheet192x96.png")
-local sprite_test2 = gm.sprite_add(sprite_test, 8, false, false, 48, 105)
-
 -- States : bunted_up, bunted_top, bunted_down, grounded, hit, (special)
 
 -- ========== Ball Handling ==========  
@@ -99,7 +102,7 @@ function recreate_old_ball(old_var)
     ball.bounces = old_var.bounces + 1
     ball.is_ball, ball.status = true, "hit"
     ball.damage_coeff = damage_coeff * math.abs(ball.hspeed)
-    --ball.sprite_index = gm.constants.sEngiGrenadeP
+    ball.sprite_index = old_var.sprite_index
     return ball
 end
 
@@ -116,6 +119,7 @@ function get_ball_vars(ball)
         status = ball.status,
         is_ball = ball.is_ball,
         custom_id = ball.custom_id,
+        sprite_index = ball.sprite_index
     }
 end
 
@@ -173,7 +177,7 @@ function create_new_ball(parent)
     ball.bounces = - max_ball_bounces + 3
     ball.is_ball, ball.status = true, "bunted_up"
     ball.damage_coeff = damage_coeff
-    --ball.sprite_index = gm.constants.sEngiGrenadeP
+    ball.sprite_index = ball_sprite
 
     old_variables[ball.custom_id] = get_ball_vars(ball)
     old_balls[ball.custom_id] = ball
@@ -233,12 +237,11 @@ function special_skill(parent, time)
     special_display_1 = gm.instance_create_depth(parent.x + special_range_x, parent.y, 1, gm.constants.oBossRain)
     special_display_2 = gm.instance_create_depth(parent.x - special_range_x, parent.y, 1, gm.constants.oBossRain)
     special_display_1.parent, special_display_2.parent = parent, parent
-    special_display_1.sprite_index, special_display_2.sprite_index = sprite_test2, sprite_test2
+    special_display_1.sprite_index, special_display_2.sprite_index = special_sprite, special_sprite
 
     special_display_1.image_speed, special_display_2.image_speed = 0.2, 0.2
     special_timer = special_duration
 end
-
 
 -- ========== Main ==========
 
@@ -309,34 +312,10 @@ function update_balls()
     old_variables = new_variables
 end
 
--- ========== Hooks ==========
-
-gm.post_script_hook(gm.constants.__input_system_tick, function() 
-    update_balls()
-end)
-
--- Reset Arrays
-gm.pre_script_hook(gm.constants.run_create, function(self, other, result, args)
-    --ingame = true
-    local custom_id = 0
-    old_variables = {}
-    old_balls = {}
-end)
-
-gm.post_script_hook(gm.constants.actor_phy_on_landed, function(self, other, result, args)
-    ingame = true
-end)
-
-gm.pre_script_hook(gm.constants.run_destroy, function(self, other, result, args)
-    ingame = false
-end)
-
-
--- Survivor Setup
+-- ========== Survivor Setup ==========
 
 local candyman_id = -1
 local candyman = nil
-
 
 local function create_survivor()
     candyman_id = gm.survivor_create("SmoothSpatula", "Candyman")
@@ -344,7 +323,7 @@ local function create_survivor()
     local commando_survivor_id = 0
     local vanilla_survivor = survivor_setup.Survivor(commando_survivor_id)
 
-    -- configure properties
+    -- Configure Properties
     candyman.token_name = "Candyman"
     candyman.token_name_upper = "CANDYMAN"
     candyman.token_description = "He's here to smash and bunt!"
@@ -355,20 +334,23 @@ local function create_survivor()
     candyman.sprite_idle = idle_sprite
     candyman.sprite_portrait = portrait_sprite
     candyman.sprite_portrait_small = portraitsmall_sprite
+    candyman.sprite_palette = palette_sprite
+    candyman.sprite_portrait_palette = palette_sprite
+    candyman.sprite_loadout_palette = palette_sprite
     candyman.sprite_credits = walk_sprite
     -- candyman.primary_color = vanilla_survivor.primary_color
     -- candyman.primary_color = 0x70D19D -- gamemaker uses BBGGRR colour
 
-    -- configure skills
+    -- Configure Skills
 
     -- Primary
     local skill_primary = candyman.skill_family_z[0]
 
-    skill_primary.token_name = "Smash"
-    skill_primary.token_description = "Smash ennemies for 150%.\n Smash the ball."
+    skill_primary.token_name = "Candy Smash"
+    skill_primary.token_description = "Smash ennemies for <y>150% damage.</c>\n Smash <b>all</c> the balls in its range."
 
-    skill_primary.sprite = vanilla_survivor.skill_family_z[0].sprite
-    skill_primary.subimage = vanilla_survivor.skill_family_z[0].subimage
+    skill_primary.sprite = skills_sprite
+    skill_primary.subimage = 0
 
     skill_primary.cooldown = 0
     skill_primary.damage = 1.5
@@ -381,17 +363,17 @@ local function create_survivor()
 
     skill_primary.on_can_activate = vanilla_survivor.skill_family_z[0].on_can_activate
     skill_primary.on_activate = vanilla_survivor.skill_family_z[0].on_activate
-    skill_primary.on_step = vanilla_survivor.skill_family_z[0].on_step
     
     -- Secondary
     local skill_secondary = candyman.skill_family_x[0]
-    skill_secondary.token_name = "Bunt"
-    skill_secondary.token_description = "Damage enemies for 75% and stun them.\nBunt the ball."
 
-    skill_secondary.sprite = vanilla_survivor.skill_family_z[0].sprite
-    skill_secondary.subimage = vanilla_survivor.skill_family_z[0].subimage
+    skill_secondary.token_name = "Candy Bunt"
+    skill_secondary.token_description = "Bunt enemies, <y>stunning</c> and hitting them for <y>75% damage.</c>\nBunt the <b>nearest</c> ball."
 
-    skill_secondary.cooldown = 60
+    skill_secondary.sprite = skills_sprite
+    skill_secondary.subimage = 1
+
+    skill_secondary.cooldown = 90
     skill_secondary.damage = 0.75
     skill_secondary.required_stock = 0
     skill_secondary.require_key_press = true
@@ -404,25 +386,44 @@ local function create_survivor()
     
     -- Utility
     local skill_utility = candyman.skill_family_c[0]
-    -- skill_utility.sprite = gm.constants.sMobSkills
-    -- skill_utility.animation = shoot1_sprite
-    -- skill_primary.is_utility = true
+
+    skill_utility.token_name = "Candy Throw"
+    skill_utility.token_description = "Throw a ball that bounce on the walls and enemies for <y>300% damage.</c>\nBalls can be smashed to <b>accelerate by 20%.</c>\nBalls can be bunted to be <b>stopped</c> (<r>speed is buffered</c>)"
+
+    skill_utility.sprite = skills_sprite
+    skill_utility.subimage = 2
+
+    skill_utility.cooldown = 240
+    skill_utility.required_stock = 4
+    skill_utility.require_key_press = true
+    skill_utility.use_delay = 30
+    skill_utility.is_utility = true
     
-    -- skill_utility.on_can_activate = vanilla_survivor.skill_family_c[0].on_can_activate
-    -- skill_utility.on_activate = vanilla_survivor.skill_family_c[0].on_activate
+    skill_utility.on_can_activate = vanilla_survivor.skill_family_c[0].on_can_activate
+    skill_utility.on_activate = vanilla_survivor.skill_family_c[0].on_activate
     
     -- Special
     local skill_special = candyman.skill_family_v[0]
-    -- skill_special.sprite = gm.constants.sMobSkills
-    -- skill_special.animation = shoot1_sprite
+
+    skill_special.token_name = "Sugar Rush"
+    skill_special.token_description = "Summon <b>two portals</c> that warp any balls from one portal to the other."
+
+    skill_special.sprite = skills_sprite
+    skill_special.subimage = 3
+
+    skill_special.cooldown = 1500
+    skill_special.required_stock = 0
+    skill_special.require_key_press = true
+    skill_special.use_delay = 0
+
+    skill_special.does_change_activity_state = true
     
-    -- skill_special.on_can_activate = vanilla_survivor.skill_family_v[0].on_can_activate
-    -- skill_special.on_activate = vanilla_survivor.skill_family_v[0].on_activate
+    skill_special.on_can_activate = vanilla_survivor.skill_family_v[0].on_can_activate
+    skill_special.on_activate = vanilla_survivor.skill_family_v[0].on_activate
 
     candyman.on_init = vanilla_survivor.on_init
     candyman.on_step = vanilla_survivor.on_step
     candyman.on_remove = vanilla_survivor.on_remove
-    
 end
 
 local function setup_sprites(self)
@@ -435,43 +436,40 @@ local function setup_sprites(self)
     self.sprite_jump        = jump_sprite
     self.sprite_jump_peak   = jump_sprite
     self.sprite_fall        = jumpfall_sprite
-    self.sprite_climb       = hit_sprite    -- change
+    self.sprite_climb       = jump_sprite    -- change
     self.sprite_death       = death_sprite
     self.sprite_decoy       = hit_sprite    -- change
 end
 
 -- Skill Setup
 
-local function skill_primary_on_step(self, actor_skill, skill_index)
-    print("HELLO")
-    print(self.image_index)
-end
-
 local function skill_primary_on_activation(self, actor_skill, skill_index)
     if self.class ~= candyman_id then return end
-
-    -- print(actor_skill.value.name)
-    -- print(skill_index.value.token_name)
 
     gm._mod_actor_setActivity(self, 92, 1, true, nil)
     self.image_speed = 0.2
 
+    if self.pVspeed == 0.0 then self.pHspeed = 0 end
+
     gm._mod_sprite_set_speed(shoot1_sprite, 1)
     gm._mod_instance_set_sprite(self, shoot1_sprite)
 
-    local ball, distance = find_closest_ball(self)
-    if ball ~= nil then hit_ball(ball, self, distance) end
+    local close_balls = find_balls_under_distance(self.x, self.y, hit_distance)
+    if not close_balls then return end
+    for _, ball in pairs(close_balls) do
+        hit_ball(ball, self, 0)
+    end
 
     local direction = gm.actor_get_facing_direction(self)
 
-    local orig_x = self.x + math.cos(direction)*2
+    local orig_x = self.x - 1.8 + math.cos(direction)*8
     local orig_y = self.y - 14
     gm._mod_attack_fire_explosion(
         self,
-        orig_x,--+math.cos(direction)*55,
+        orig_x,
         orig_y,
         60,
-        32,
+        35,
         self.skills[1].active_skill.damage,
         0,
         gm.constants.sSparks1,
@@ -482,11 +480,9 @@ end
 
 local function skill_secondary_on_activation(self, actor_skill, skill_index)
     if self.class ~= candyman_id then return end
-    --if not self.local_client_is_authority then return end -- don't call if this isn't our player
 
     gm._mod_actor_setActivity(self, 92, 1, true, nil)    
-    print(self.image_speed)
-    -- self.image_speed = 0.2
+    self.image_speed = 0.2
 
     if self.pVspeed == 0.0 then self.pHspeed = 0 end
 
@@ -496,29 +492,46 @@ local function skill_secondary_on_activation(self, actor_skill, skill_index)
     local displacement_x = bunt_displacement_x
     if gm.actor_get_facing_direction(self) == 180 then displacement_x = - bunt_displacement_x end -- facing left
     local close_balls = find_balls_under_distance(self.x + displacement_x, self.y, bunt_distance)
+
     if not close_balls then return end
     for _, ball in pairs(close_balls) do
         bunt_ball(ball, self, 0)
     end
-    
+
+    local direction = gm.actor_get_facing_direction(self)
+    local pos_x = self.x - 8 + math.cos(direction)*25
+    local pos_y = self.y - 14
+
+    local target = gm.find_target_nearest(pos_x, pos_y, self.team)
+    if target == -4 or gm.point_distance(pos_x, pos_y, target.x, target.y) > 45 then return end
+
+    gm._mod_attack_fire_direct(
+        self,
+        target.parent,
+        pos_x,
+        pos_y,
+        direction,
+        self.skills[2].active_skill.damage,
+        gm.constants.sSparks1,
+        true
+    )
+
+    gm.apply_buff(target.parent, 10, 120.0, 1)
 end
 
 local function skill_utility_on_activation(self, actor_skill, skill_index)
     if self.class ~= candyman_id then return end
-    --if not self.local_client_is_authority then return end -- don't call if this isn't our player
 
     create_new_ball(self)
-
 end
 
 local function skill_special_on_activation(self, actor_skill, skill_index)
     if self.class ~= candyman_id then return end
-    --if not self.local_client_is_authority then return end -- don't call if this isn't our player
     client_player = self
     special_skill(self, 0)
 end
 
--- Callbacks
+-- ========== Hooks ==========
 
 local callback_names = gm.variable_global_get("callback_names")
 local on_player_init_callback_id = 0
@@ -569,16 +582,9 @@ local function setup_skills_callbacks()
     local utility = candyman.skill_family_c[0]
     local special = candyman.skill_family_v[0]
 
-    if not pre_hooks[primary.on_step] then
-        pre_hooks[primary.on_step] = function(self, other, result, args)
-            skill_primary_on_step(self)
-            return false
-        end
-    end
-
     if not pre_hooks[primary.on_activate] then
         pre_hooks[primary.on_activate] = function(self, other, result, args)
-            skill_primary_on_activation(self, args[2], args[3])
+            skill_primary_on_activation(self)
             return false
         end
     end
@@ -605,7 +611,6 @@ local function setup_skills_callbacks()
     end
 end
 
-
 post_hooks[on_player_init_callback_id] = function(self, other, result, args)
     setup_sprites(self)
 
@@ -625,14 +630,22 @@ gm.pre_code_execute(function(self, other, code, result, flags)
     end
 end)
 
--- gm.post_script_hook(gm.constants.actor_activity_set, function(self, other, result, args)
---     if args[1].value.team ~= 1 then return end
-    
---     print(args[2].value)
---     print(args[3].value)
---     print(args[4].value)
---     print(args[5].value.script_name)
---     print(args[6].value)
--- end)
+gm.post_script_hook(gm.constants.__input_system_tick, function() 
+    update_balls()
+end)
 
+-- Reset Arrays
+gm.pre_script_hook(gm.constants.run_create, function(self, other, result, args)
+    --ingame = true
+    local custom_id = 0
+    old_variables = {}
+    old_balls = {}
+end)
 
+gm.post_script_hook(gm.constants.actor_phy_on_landed, function(self, other, result, args)
+    ingame = true
+end)
+
+gm.pre_script_hook(gm.constants.run_destroy, function(self, other, result, args)
+    ingame = false
+end)
