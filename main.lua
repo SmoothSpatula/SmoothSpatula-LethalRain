@@ -327,7 +327,7 @@ local function create_survivor()
     -- Configure Properties
     candyman.token_name = "Candyman"
     candyman.token_name_upper = "CANDYMAN"
-    candyman.token_description = "He's here to smash and bunt!"
+    candyman.token_description = "<y>Candyman<w> is a weird but powerful dandy. Combo his <y>balls<w> into ennemies to deal massive amounts of damage! Make sure to <y>Bunt<w> balls or they will disapear after a few <y>bounces<w>."
     candyman.token_end_quote = "It was a fun ride"
 
     candyman.sprite_loadout = loadout_sprite
