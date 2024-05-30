@@ -458,7 +458,7 @@ local function skill_primary_on_activation(self, actor_skill, skill_index)
     gm._mod_sprite_set_speed(shoot1_sprite, 1)
     gm._mod_instance_set_sprite(self, shoot1_sprite)
 
-    local close_balls = find_balls_under_distance(self.x, self.y, hit_distance)
+    local close_balls = find_balls_under_distance(self.x -1.8, self.y, hit_distance)
     if close_balls then
         for _, ball in pairs(close_balls) do
             hit_ball(ball, self, 0)
