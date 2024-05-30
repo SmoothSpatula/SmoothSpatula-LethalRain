@@ -64,6 +64,7 @@ local max_ball_bounces = 12
 local max_speed = 50
 local throw_displacement_x = 10 
 local bunt_displacement_x = 30
+local ball_size = 0.75
 
 local special_timer = 0 
 local special_duration = 420 -- 10 seconds
@@ -98,6 +99,8 @@ function recreate_old_ball(old_var)
     ball.is_ball, ball.status = true, "hit"
     ball.damage_coeff = damage_coeff * math.abs(ball.hspeed)
     ball.sprite_index = old_var.sprite_index
+    ball.image_xscale = ball_size
+    ball.image_yscale = ball_size
     return ball
 end
 
@@ -173,6 +176,8 @@ function create_new_ball(parent)
     ball.is_ball, ball.status = true, "bunted_up"
     ball.damage_coeff = damage_coeff
     ball.sprite_index = ball_sprite
+    ball.image_xscale = ball_size
+    ball.image_yscale = ball_size
 
     old_variables[ball.custom_id] = get_ball_vars(ball)
     old_balls[ball.custom_id] = ball
@@ -205,6 +210,8 @@ function hit_ball(ball, parent)
     ball.gravity = 0
     ball.damage_coeff = damage_coeff * math.abs(ball.hspeed)
     ball.status = "hit"
+    ball.image_xscale = ball_size
+    ball.image_yscale = ball_size
 end
 
 -- Bunts the ball, stoping its momentum but storing its speed for when it's hit again
