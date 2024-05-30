@@ -2,20 +2,13 @@ log.info("Successfully loaded ".._ENV["!guid"]..".")
 survivor_setup = require("./survivor_setup")
 mods.on_all_mods_loaded(function() for k, v in pairs(mods) do if type(v) == "table" and v.hfuncs then Helper = v end end end)
 
--- Testing grenades
-
-local grenade_table = {}
-local count = 0
-local client_player = nil
-
-
 -- ========== Sprite ========== 
 
 local portrait_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanPortrait.png")
 local portraitsmall_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanPortraitSmall.png")
 
 -- Using a modified version of https://elthen.itch.io/2d-pixel-art-portal-sprites as a placeholder
-local special_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites","PurplePortalSpriteSheet192x96v2.png")
+local special_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites","PurplePortalSpriteSheet192x96.png")
 local ball_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites","sCandymanBall.png")
 
 local skills_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "skillsicons.png")
@@ -224,12 +217,12 @@ function bunt_ball(ball, parent)
     ball.bounces = - max_ball_bounces + 3
     ball.is_ball, ball.status = true, "bunted_up"
     ball.damage_coeff = damage_coeff
-    print(ball.old_hspeed)
     return ball
 end
 
 
-function special_skill(parent, time)
+function special_skill(parent)
+    print("SPECIAL")
     if special_timer > 0 then 
         special_timer = special_duration
         return 
@@ -394,7 +387,10 @@ local function create_survivor()
     skill_utility.subimage = 2
 
     skill_utility.cooldown = 240
-    skill_utility.required_stock = 4
+    skill_utility.max_stock = 4
+    skill_utility.start_with_stock = 4
+    skill_utility.auto_restock = true
+    skill_utility.required_stock = 1
     skill_utility.require_key_press = true
     skill_utility.use_delay = 30
     skill_utility.is_utility = true
@@ -455,9 +451,10 @@ local function skill_primary_on_activation(self, actor_skill, skill_index)
     gm._mod_instance_set_sprite(self, shoot1_sprite)
 
     local close_balls = find_balls_under_distance(self.x, self.y, hit_distance)
-    if not close_balls then return end
-    for _, ball in pairs(close_balls) do
-        hit_ball(ball, self, 0)
+    if close_balls then
+        for _, ball in pairs(close_balls) do
+            hit_ball(ball, self, 0)
+        end
     end
 
     local direction = gm.actor_get_facing_direction(self)
@@ -489,16 +486,17 @@ local function skill_secondary_on_activation(self, actor_skill, skill_index)
     gm._mod_sprite_set_speed(shoot2_sprite, 1)
     gm._mod_instance_set_sprite(self, shoot2_sprite)
 
+    local direction = gm.actor_get_facing_direction(self)
     local displacement_x = bunt_displacement_x
-    if gm.actor_get_facing_direction(self) == 180 then displacement_x = - bunt_displacement_x end -- facing left
+    if direction == 180 then displacement_x = - bunt_displacement_x end
     local close_balls = find_balls_under_distance(self.x + displacement_x, self.y, bunt_distance)
 
-    if not close_balls then return end
-    for _, ball in pairs(close_balls) do
-        bunt_ball(ball, self, 0)
+    if close_balls then
+        for _, ball in pairs(close_balls) do
+            bunt_ball(ball, self, 0)
+        end
     end
 
-    local direction = gm.actor_get_facing_direction(self)
     local pos_x = self.x - 8 + math.cos(direction)*25
     local pos_y = self.y - 14
 
@@ -528,7 +526,7 @@ end
 local function skill_special_on_activation(self, actor_skill, skill_index)
     if self.class ~= candyman_id then return end
     client_player = self
-    special_skill(self, 0)
+    special_skill(self)
 end
 
 -- ========== Hooks ==========
@@ -573,7 +571,6 @@ post_hooks[on_player_step_callback_id] = function(self_, other, result, args)
     if self_.class ~= candyman_id then return end
 
     local self = args[2].value
-    -- rotating_balls_step_logic(self)
 end
 
 local function setup_skills_callbacks()
