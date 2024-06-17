@@ -1,4 +1,6 @@
-log.info("Successfully loaded ".._ENV["!guid"]..".")
+-- ImpOverlord v1.0.2
+-- SmoothSpatula
+log.info("Loading ".._ENV["!guid"]..".")
 survivor_setup = require("./survivor_setup")
 mods.on_all_mods_loaded(function() for k, v in pairs(mods) do if type(v) == "table" and v.hfuncs then Helper = v end end end)
 
@@ -428,6 +430,13 @@ local function create_survivor()
     candyman.on_init = vanilla_survivor.on_init
     candyman.on_step = vanilla_survivor.on_step
     candyman.on_remove = vanilla_survivor.on_remove
+
+    candyman.cape_offset = vanilla_survivor.cape_offset
+
+    local cape_offset = gm.variable_global_get("class_survivor")[candyman_id+1][34]
+    gm.array_set(cape_offset, 0, 0.0)
+    gm.array_set(cape_offset, 1, -22.0)
+    gm.array_set(cape_offset, 2, 1.0)
 end
 
 local function setup_sprites(self)
@@ -473,10 +482,10 @@ local function skill_primary_on_activation(self, actor_skill, skill_index)
         self,
         orig_x,
         orig_y,
-        60,
-        35,
+        90,
+        40,
         self.skills[1].active_skill.damage,
-        empty_sprite,
+        gm.constants.sEfSlash,
         gm.constants.sSparks1,
         true
     )
