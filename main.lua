@@ -1,4 +1,4 @@
--- ImpOverlord v1.0.2
+-- LethalRain v1.0.2
 -- SmoothSpatula
 log.info("Loading ".._ENV["!guid"]..".")
 survivor_setup = require("./survivor_setup")
@@ -24,7 +24,6 @@ local death_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sC
 local jump_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanjump.png")
 local jumpfall_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanjumpfall.png")
 local hit_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanhit.png")
-local empty_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "sCandymanEmpty.png")
 
 local palette_path = path.combine(_ENV["!plugins_mod_folder_path"], "Sprites", "candyman_PAL.png")
 
@@ -46,7 +45,6 @@ local death_sprite = gm.sprite_add(death_path, 4, false, false, 29, 10)
 local jump_sprite = gm.sprite_add(jump_path, 1, false, false, 29, 45)
 local jumpfall_sprite = gm.sprite_add(jumpfall_path, 1, false, false, 29, 45)
 local hit_sprite = gm.sprite_add(hit_path, 1, false, false, 29, 45)
-local empty_sprite = gm.sprite_add(empty_path, 1, false, false, 0, 0)
 
 local palette_sprite = gm.sprite_add(hit_path, 1, false, false, 0, 0)
 
@@ -69,7 +67,7 @@ local bunt_displacement_x = 30
 local ball_size = 0.75
 
 local special_timer = 0 
-local special_duration = 420 -- 10 seconds
+local special_duration = 7 --seconds
 local special_range_x = 150
 local special_range_y = 100
 local special_display_1 = nil
@@ -81,7 +79,8 @@ local old_variables = {}
 local old_balls = {}
 local custom_id = 0
 local ingame = false
-local client_player = nil
+local specials = {}
+local special_nb = 0
 
 -- States : bunted_up, bunted_top, bunted_down, grounded, hit, (special)
 
@@ -246,17 +245,26 @@ function special_skill(parent)
     special_timer = special_duration
 end
 
+local start_special = function (self)
+    specials[#specials+1] = self
+    special_nb = special_nb + 1
+end
+
+
+local stop_special = function (self)
+    for i, inst in ipairs(specials) do
+        if inst.id == self.id then
+            special_nb = special_nb - 1
+            table.remove(specials, i)
+            return 
+        end
+    end
+end
+
+
 -- ========== Main ==========
 
 function update_balls() 
-    special_timer = special_timer - 1
-    if special_timer>0 then 
-        special_display_1.x, special_display_2.x =  client_player.x + special_range_x, client_player.x - special_range_x
-        special_display_1.y, special_display_2.y =  client_player.y, client_player.y
-    elseif special_timer == 0 then
-        gm.instance_destroy(special_display_1)
-        gm.instance_destroy(special_display_2)
-    end
     if not next(old_balls) and not next(old_variables) then return nil end -- if no old or new balls exist
 
     new_variables = {}
@@ -299,21 +307,51 @@ function update_balls()
                 ball.hspeed = 0
                 ball.vspeed = 0
             end
-            if special_timer > 0 then
-                if math.abs(ball.y - client_player.y) < special_range_y and math.abs(ball.x - client_player.x) < special_range_x + 40 then
-                    if ball.x > (client_player.x + special_range_x) then 
-                        ball.x = client_player.x - special_range_x
-                    elseif ball.x < (client_player.x - special_range_x) then
-                        ball.x = client_player.x + special_range_x
+            if special_nb > 0 then
+                for _, player in ipairs(specials) do
+                    if math.abs(ball.y - player.y) < special_range_y and math.abs(ball.x - player.x) < special_range_x + 40 then
+                        if ball.x > (player.x + special_range_x) then 
+                            ball.x = player.x - special_range_x
+                        elseif ball.x < (player.x - special_range_x) then
+                            ball.x = player.x + special_range_x
+                        end
                     end
                 end
             end
             new_variables[c_id] = get_ball_vars(ball) --Save ball vars
         end
     end
-
     old_variables = new_variables
 end
+
+
+-- Drawing special
+local frames = 0
+local x_cam, y_cam = 0, 0
+gm.post_code_execute(function(self, other, code, result, flags)
+    if not gm.variable_global_get("__run_exists") or not special_nb then return end
+    if code.name:match("oInit_Draw_7") then
+        frames = frames + 0.1 -- 6 images per second
+        cam = gm.view_get_camera(0)
+        x_cam = gm.camera_get_view_x(cam)
+        y_cam =  gm.camera_get_view_y(cam)
+
+        surf_special = gm.surface_create(gm.camera_get_view_width(cam), gm.camera_get_view_height(cam))
+        gm.surface_set_target(surf_special)
+        gm.draw_clear_alpha(0, 0)
+
+        for _, inst in ipairs(specials) do
+            gm.draw_sprite_ext(special_sprite, frames, inst.x - x_cam - special_range_x, inst.y - y_cam, 1, 1, 0.0, 16777215, 1)
+            gm.draw_sprite_ext(special_sprite, frames, inst.x - x_cam + special_range_x, inst.y - y_cam, -1, 1, 0.0, 16777215, 1)
+        end
+    
+        
+        gm.surface_reset_target()
+        gm.draw_surface(surf_special, gm.camera_get_view_x(cam), gm.camera_get_view_y(cam))
+        gm.surface_free(surf_special) --do this or run out of memory
+        gm.draw_set_alpha(1)
+    end
+end)
 
 -- ========== Survivor Setup ==========
 
@@ -341,8 +379,7 @@ local function create_survivor()
     candyman.sprite_portrait_palette = palette_sprite
     candyman.sprite_loadout_palette = palette_sprite
     candyman.sprite_credits = walk_sprite
-    -- candyman.primary_color = vanilla_survivor.primary_color
-    -- candyman.primary_color = 0x70D19D -- gamemaker uses BBGGRR colour
+    candyman.primary_color = gm.make_colour_rgb(247, 250, 3) -- yellow
 
     -- Configure Skills
 
@@ -417,7 +454,7 @@ local function create_survivor()
     skill_special.sprite = skills_sprite
     skill_special.subimage = 3
 
-    skill_special.cooldown = 1800
+    skill_special.cooldown = 60*24
     skill_special.required_stock = 1
     skill_special.require_key_press = true
     skill_special.use_delay = 0
@@ -542,8 +579,9 @@ end
 
 local function skill_special_on_activation(self, actor_skill, skill_index)
     if self.class ~= candyman_id then return end
-    client_player = self
-    special_skill(self)
+    start_special(self)
+    local myMethod = gm.method(self.id, gm.constants.function_dummy)
+    local _handle = gm.call_later(special_duration*60, 1, myMethod, false)
 end
 
 -- ========== Hooks ==========
@@ -624,6 +662,12 @@ local function setup_skills_callbacks()
         end
     end
 end
+
+
+gm.post_script_hook(gm.constants.function_dummy, function(self, other, result, args)
+    if self.class ~= candyman_id then return end
+    stop_special(self)
+end)
 
 post_hooks[on_player_init_callback_id] = function(self, other, result, args)
     setup_sprites(self)
