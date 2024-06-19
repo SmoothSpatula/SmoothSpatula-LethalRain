@@ -2,9 +2,9 @@
 	"name": "LethalRain",
 	"version_number": "1.0.2",
 	"website_url": "https://github.com/SmoothSpatula/SmoothSpatula-LethalRain",
-	"description": "This mods adds the first custom character to RoRR, Candyman from Lethal League!",
+	"description": "This mods adds a custom character, Candyman from Lethal League! [Should now work fine in multiplayer]",
 	"dependencies": [
-		"ReturnOfModding-ReturnOfModding-1.0.0",
-		"Klehrik-HelperFunctions-1.0.4"
+		"ReturnOfModding-ReturnOfModding-1.0.32",
+		"Klehrik-HelperFunctions-1.0.8"
 	]
 }
