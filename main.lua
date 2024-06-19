@@ -485,7 +485,7 @@ local function skill_primary_on_activation(self, actor_skill, skill_index)
         90,
         40,
         self.skills[1].active_skill.damage,
-        gm.constants.sEfSlash,
+        gm.constants.sEfOilSplash5,
         gm.constants.sSparks1,
         true
     )
