@@ -1,8 +1,8 @@
--- LethalRain v1.0.2
+-- LethalRain v1.0.3
 -- SmoothSpatula
 log.info("Loading ".._ENV["!guid"]..".")
 survivor_setup = require("./survivor_setup")
-mods.on_all_mods_loaded(function() for k, v in pairs(mods) do if type(v) == "table" and v.hfuncs then Helper = v end end end)
+--mods["RoRRModdingToolkit-RoRR_Modding_Toolkit"].auto(true)
 
 -- ========== Sprite ========== 
 
@@ -88,7 +88,7 @@ local special_nb = 0
 
 -- Like the phoenix, the ball rises from the ashes upon hitting an ennemy
 function recreate_old_ball(old_var)
-    ball = gm.instance_create_depth(old_var.x - (old_var.old_hspeed * 5), old_var.y, 1, 681)
+    ball = gm.instance_create_depth(old_var.x - (old_var.old_hspeed * 5), old_var.y, 1, gm.constants.oEngiGrenade)
     ball.parent = old_var.par
     ball.custom_id = old_var.custom_id
     -- transform
@@ -164,7 +164,7 @@ function create_new_ball(parent)
         x_pos = x_pos - 2* throw_displacement_x
     end
 
-    local ball = gm.instance_create_depth(x_pos, parent.y, 1, 681)
+    local ball = gm.instance_create_depth(x_pos, parent.y, 1, gm.constants.oEngiGrenade)
     ball.parent = parent
     ball.custom_id = custom_id
     custom_id = custom_id + 1
@@ -188,7 +188,7 @@ end
 -- Hits the ball, giving it some speed and changing it's state to 'hit'
 -- Hitting the ball at it's apex makes it go twice as fast
 function hit_ball(ball, parent)
-    local speed = ball.old_hspeed
+    local speed = ball.old_hspeed or ball.hspeed
     if ball.status =="hit" then 
         if gm.actor_get_facing_direction(parent) == 180 then -- facing left
             ball.hspeed = - math.min(max_speed, math.abs(ball.old_hspeed) * speed_up)
@@ -555,7 +555,7 @@ local function skill_secondary_on_activation(self, actor_skill, skill_index)
     local pos_y = self.y - 14
 
     local target = gm.find_target_nearest(pos_x, pos_y, self.team)
-    if target == -4 or gm.point_distance(pos_x, pos_y, target.x, target.y) > 45 then return end
+    if target == -4 or target == nil or gm.point_distance(pos_x, pos_y, target.x, target.y) > 45 then return end
 
     gm._mod_attack_fire_direct(
         self,
@@ -592,10 +592,12 @@ local on_player_step_callback_id = 0
 for i = 1, #callback_names do
     local callback_name = callback_names[i]
     if callback_name:match("onPlayerInit") then
+        print(callback_name)
         on_player_init_callback_id = i - 1
     end
 
     if callback_name:match("onPlayerStep") then
+        print(callback_name)
         on_player_step_callback_id = i - 1
     end
 end
@@ -675,16 +677,11 @@ post_hooks[on_player_init_callback_id] = function(self, other, result, args)
     setup_skills_callbacks()
 end
 
-local hooks = {}
-hooks["gml_Object_oStartMenu_Step_2"] = function() -- mod init
-    hooks["gml_Object_oStartMenu_Step_2"] = nil
-
-    create_survivor()
-end
-
-gm.pre_code_execute(function(self, other, code, result, flags)
-    if hooks[code.name] then
-        hooks[code.name](self)
+local initialized = false
+gm.pre_code_execute("gml_Object_oStartMenu_Step_2", function(self, other, code, result, flags)
+    if not initialized then
+        create_survivor()
+        initialized = true
     end
 end)
 
